@@ -4,6 +4,9 @@ from unittest.mock import MagicMock
 from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import vaex
+import vaex.dask
+# import vaex.ray
+
 
 
 def test_signals(df):
@@ -102,8 +105,13 @@ def test_nested_task(df):
 # import vaex
 # import vaex.dask
 # import vaex.ray
-# import numpy as np
+import numpy as np
 
+
+@pytest.fixture(params=['executor_dask'])
+def executor(request, executor_dask):
+    named = dict(executor_dask=executor_dask, executor_ray=executor_ray)
+    return named[request.param]
 
 # @pytest.fixture(params=['executor_dask', 'executor_ray'])
 # def executor(request, executor_dask, executor_ray):
@@ -111,34 +119,44 @@ def test_nested_task(df):
 #     return named[request.param]
 
 
-# @pytest.fixture(scope='session')
-# def executor_ray():
-#     return vaex.ray.Executor(chunk_size=2)
+@pytest.fixture(scope='session')
+def executor_ray():
+    return vaex.ray.Executor(chunk_size=2)
 
 
-# @pytest.fixture(scope='session')
-# def executor_dask():
-#     return vaex.dask.Executor(chunk_size=2)
+@pytest.fixture(scope='session')
+def executor_dask():
+    return vaex.dask.Executor(chunk_size=2)
 
 
-# @pytest.fixture
-# def df():
-#     x = np.arange(10)
-#     y = x**2
-#     df = vaex.from_arrays(x=x, y=y)
-#     return df
+@pytest.fixture
+def df():
+    x = np.arange(10)
+    y = x**2
+    df = vaex.from_arrays(x=x, y=y)
+    return df
 
 
-# def test_task_sum(df, executor):
-#     total = df.x.sum()
-#     task = vaex.tasks.TaskSum(df, 'x')
-#     # df.executor = None
-#     # df._expressions = None
-#     # executor = vaex.ray.ExecutorRay()
-#     executor.schedule(task)
-#     executor.execute()
-#     assert task.result == total
+def test_task_sum(df, executor):
+    total = df.x.sum()
+    task = vaex.tasks.TaskSum(df, 'x')
+    # df.executor = None
+    # df._expressions = None
+    # executor = vaex.ray.ExecutorRay()
+    executor.schedule(task)
+    executor.execute()
+    assert task.result == total
 
+
+
+def test_task_sum_hdf5(executor):
+    executor.chunk_size = 10*1024
+    df = vaex.example()
+    total = df.x.sum()
+    task = vaex.tasks.TaskSum(df, 'x')
+    executor.schedule(task)
+    executor.execute()
+    assert abs(task.result - total) < 0.01
 
 
 # def test_sum(df, executor):
