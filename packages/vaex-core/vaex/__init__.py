@@ -392,6 +392,10 @@ def from_pandas(df, name="pandas", copy_index=False, index_name="index"):
         # the first test is to support (partially) pandas 0.23
         if hasattr(pd.core.arrays, 'integer') and isinstance(values, pd.core.arrays.integer.IntegerArray):
             values = np.ma.array(values._data, mask=values._mask)
+        elif hasattr(pd.core.arrays, 'StringArray') and isinstance(values, pd.core.arrays.StringArray):
+            values = np.ma.array(values.to_numpy().astype(np.str), mask=values.isna())
+        else:
+            pass
         try:
             vaex_df.add_column(name, values)
         except Exception as e:
