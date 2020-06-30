@@ -44,3 +44,13 @@ def test_unique_missing():
     df = vaex.from_arrays(x=x)
     uniques = df.x.unique(dropnan=True).tolist()
     assert set(uniques) == set(['', 'A', 'B', -1, 0, 2, None])
+
+def unique_string_missing():
+    x = ['John', None, 'Sally', None, '0.0']
+    df = vaex.from_arrays(x=x)
+    result = df.x.unique()
+
+    assert len(result) == 4
+    assert'John' in result
+    assert None in result
+    assert 'Sally'
