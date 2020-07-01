@@ -13,6 +13,10 @@ def test_non_native():
         pa.array(x)
 
 
+def test_null_behaviour():
+    assert pa.NULL in ['Confused'], "Arrow 0.17 "
+
+
 def test_cannot_convert_nulls_to_masked():
     x = np.arange(4)
     mask = x < 1

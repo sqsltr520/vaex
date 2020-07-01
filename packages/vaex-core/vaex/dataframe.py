@@ -5006,6 +5006,10 @@ class DataFrameLocal(DataFrame):
         # codes point to the index of found_values
         # meaning: found_values[codes[0]] == ds[column].values[0]
         found_values, codes = df_unfiltered.unique(column, return_inverse=True)
+        if isinstance(found_values, array_types.supported_arrow_array_types):
+            # if a missing value is present, we get bitten by the weird behaviour that
+            # NULL in ['whatever'] == True, see tests/arrow/assumptions_test.py::test_null_behaviour
+            found_values = found_values.to_pylist()
         if values is None:
             values = found_values
         else:
