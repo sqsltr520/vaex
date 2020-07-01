@@ -508,12 +508,19 @@ class DataFrame(object):
         if not dropnan:
             if ordered_set.has_nan:
                 keys = [np.nan] + keys
-        masked = False
-        if not dropmissing:
-            if ordered_set.has_null:
-                masked = True
-                keys = [np.ma.core.MaskedConstant()] + keys
-        keys = np.ma.asarray(keys) if masked else np.asarray(keys)
+        if self.is_string(expression):
+            if not dropmissing:
+                if ordered_set.has_null:
+                    # arrow handles None as missing
+                    keys = [None] + keys
+            keys = pa.array(keys)
+        else:
+            masked = False
+            if not dropmissing:
+                if ordered_set.has_null:
+                    masked = True
+                    keys = [np.ma.core.MaskedConstant()] + keys
+            keys = np.ma.asarray(keys) if masked else np.asarray(keys)
         if return_inverse:
             return keys, inverse
         else:
