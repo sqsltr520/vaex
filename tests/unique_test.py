@@ -56,7 +56,7 @@ def test_unique_missing():
 def test_unique_string_missing():
     x = ['John', None, 'Sally', None, '0.0']
     df = vaex.from_arrays(x=x)
-    result = df.x.unique()
+    result = df.x.unique().tolist()
 
     assert len(result) == 4
     assert'John' in result

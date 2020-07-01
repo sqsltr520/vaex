@@ -508,10 +508,12 @@ class DataFrame(object):
         if not dropnan:
             if ordered_set.has_nan:
                 keys = [np.nan] + keys
+        masked = False
         if not dropmissing:
             if ordered_set.has_null:
+                masked = True
                 keys = [np.ma.core.MaskedConstant()] + keys
-        keys = np.asarray(keys)
+        keys = np.ma.asarray(keys) if masked else np.asarray(keys)
         if return_inverse:
             return keys, inverse
         else:
