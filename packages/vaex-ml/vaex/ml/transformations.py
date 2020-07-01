@@ -158,7 +158,7 @@ class LabelEncoder(Transformer):
         '''
 
         for feature in self.features:
-            labels = df[feature].unique().tolist()
+            labels = vaex.array_types.tolist(df[feature].unique())
             self.labels_[feature] = dict(zip(labels, np.arange(len(labels))))
 
     def transform(self, df):
