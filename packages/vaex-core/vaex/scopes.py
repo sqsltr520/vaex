@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pyarrow as pa
 import vaex.array_types
+import vaex.arrow.numpy_dispatch
 
 
 from .utils import (_ensure_strings_from_expressions,
@@ -110,6 +111,8 @@ class _BlockScope(ScopeBase):
             #   result = out
             # logger.debug("out eval")
         # logger.debug("done with eval of %s", expression)
+        if isinstance(result, vaex.arrow.numpy_dispatch.NumpyDispatch):
+            result = result.arrow_array
         return result
 
     def __getitem__(self, variable):
@@ -135,6 +138,8 @@ class _BlockScope(ScopeBase):
                         values = values.filter(vaex.array_types.to_arrow(self.mask))
                     else:
                         values = values[self.mask]
+                if isinstance(values, vaex.array_types.supported_arrow_array_types):
+                    values = vaex.arrow.numpy_dispatch.NumpyDispatch(values)
                 self.values[variable] = values
             elif variable in list(self.df.virtual_columns.keys()):
                 expression = self.df.virtual_columns[variable]
@@ -144,7 +149,10 @@ class _BlockScope(ScopeBase):
                     self.values[variable] = function(*arguments)
                 else:
                     # self._ensure_buffer(variable)
-                    self.values[variable] = self.evaluate(expression)  # , out=self.buffers[variable])
+                    values = self.evaluate(expression)
+                    if isinstance(values, vaex.array_types.supported_arrow_array_types):
+                        values = vaex.arrow.numpy_dispatch.NumpyDispatch(values)
+                    self.values[variable] = values
                     # self.values[variable] = self.buffers[variable]
             elif variable in self.df.functions:
                 return self.df.functions[variable].f
