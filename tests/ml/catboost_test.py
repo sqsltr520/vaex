@@ -1,4 +1,6 @@
 import numpy as np
+import pytest
+pytest.importorskip("catboost")
 import catboost as cb
 import vaex.ml.catboost
 import vaex.ml.datasets

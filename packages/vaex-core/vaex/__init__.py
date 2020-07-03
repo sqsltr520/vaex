@@ -385,6 +385,7 @@ def from_pandas(df, name="pandas", copy_index=False, index_name="index"):
     import six
     import pandas as pd
     import numpy as np
+    import pyarrow as pa
     vaex_df = vaex.dataframe.DataFrameArrays(name)
 
     def add(name, column):
@@ -393,7 +394,7 @@ def from_pandas(df, name="pandas", copy_index=False, index_name="index"):
         if hasattr(pd.core.arrays, 'integer') and isinstance(values, pd.core.arrays.integer.IntegerArray):
             values = np.ma.array(values._data, mask=values._mask)
         elif hasattr(pd.core.arrays, 'StringArray') and isinstance(values, pd.core.arrays.StringArray):
-            values = np.ma.array(values.to_numpy().astype(np.str), mask=values.isna())
+            values = pa.array(values)
         else:
             pass
         try:

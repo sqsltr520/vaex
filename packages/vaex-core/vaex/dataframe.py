@@ -2071,7 +2071,11 @@ class DataFrame(object):
         column = _ensure_string_from_expression(column)
         if column in self.columns:
             column = self.columns[column]
-            if isinstance(column, np.ndarray):
+            if isinstance(column, vaex.array_types.supported_arrow_array_types):
+                # Arrow arrays can always contain missing values
+                # Does it help if we find out if it actually contains them?
+                return True
+            elif isinstance(column, np.ndarray):
                 return np.ma.isMaskedArray(column)
             else:
                 # in case the column is not a numpy array, we take a small slice
