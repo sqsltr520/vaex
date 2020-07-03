@@ -225,17 +225,15 @@ class OneHotEncoder(Transformer):
         uniques = []
         for i in self.features:
             expression = _ensure_strings_from_expressions(i)
-            unique = df.unique(expression)
-            unique = vaex.array_types.tolist(unique)
+            unique_values = vaex.array_types.tolist(df.unique(expression))
 
-            if None in unique:
-                unique = list(filter(None, unique))
-                unique = np.sort(unique).tolist()
-                unique.insert(0, None)  # This is done in place
+            if None in unique_values:
+                unique_values.remove(None)
+                unique_values.sort()
+                unique_values.insert(0, None)  # This is done in place
             else:
-                unique = np.sort(unique).tolist()
-
-            uniques.append(unique)
+                unique_values.sort()
+            uniques.append(unique_values)
         self.uniques_ = uniques
 
     def transform(self, df):
@@ -249,7 +247,8 @@ class OneHotEncoder(Transformer):
         # for each feature, add a virtual column for each unique entry
         for i, feature in enumerate(self.features):
             for j, value in enumerate(self.uniques_[i]):
-                column_name = self.prefix + feature + '_' + str(value)
+                str_value = str(value) if value is not None else 'missing'
+                column_name = self.prefix + feature + '_' + str_value
                 if value is None:
                     copy[column_name] = copy.func.where(copy[feature].ismissing(), self.one, self.zero)
                 elif isinstance(value, np.float) and np.isnan(value):

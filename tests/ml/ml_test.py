@@ -230,10 +230,10 @@ def test_one_hot_encoding_with_na():
     enc.fit(df_train)
 
     assert enc.uniques_[0] == [None, 'Michael', 'Reggie']
-    np.testing.assert_array_equal(enc.uniques_[1], [23.0, 31.0, np.nan])
+    np.testing.assert_array_equal(enc.uniques_[1], [np.nan, 23.0, 31.0])
 
     df_train = enc.transform(df_train)
-    assert df_train.x_None.tolist() == [0, 0, 1, 0]
+    assert df_train.x_missing.tolist() == [0, 0, 1, 0]
     assert df_train.x_Michael.tolist() == [0, 1, 0, 0]
     assert df_train.x_Reggie.tolist() == [1, 0, 0, 1]
     assert df_train['y_23.0'].tolist() == [0, 1, 0, 0]
@@ -241,7 +241,7 @@ def test_one_hot_encoding_with_na():
     assert df_train['y_nan'].tolist() == [0, 0, 1, 0]
 
     df_test = enc.transform(df_test)
-    assert df_test.x_None.tolist() == [0, 0, 1, 1]
+    assert df_test.x_missing.tolist() == [0, 0, 1, 1]
     assert df_test.x_Michael.tolist() == [1, 0, 0, 0]
     assert df_test.x_Reggie.tolist() == [0, 1, 0, 0]
     assert df_test['y_23.0'].tolist() == [1, 0, 0, 0]
