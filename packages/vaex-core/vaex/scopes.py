@@ -155,7 +155,8 @@ class _BlockScope(ScopeBase):
                     self.values[variable] = values
                     # self.values[variable] = self.buffers[variable]
             elif variable in self.df.functions:
-                return self.df.functions[variable].f
+                f = self.df.functions[variable].f
+                return vaex.arrow.numpy_dispatch.autowrapper(f)
             if variable not in self.values:
                 raise KeyError("Unknown variables or column: %r" % (variable,))
 
@@ -256,7 +257,8 @@ class _BlockScopeSelection(ScopeBase):
                     return self.evaluate(expression)  # , out=self.buffers[variable])
                     # self.values[variable] = self.buffers[variable]
                 elif variable in self.df.functions:
-                    return self.df.functions[variable].f
+                    f = self.df.functions[variable].f
+                    return vaex.arrow.numpy_dispatch.autowrapper(f)
                 raise KeyError("Unknown variables or column: %r" % (variable,))
         except:
             import traceback as tb

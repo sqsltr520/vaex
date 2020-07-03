@@ -24,3 +24,24 @@ for op in _binary_ops:
             return operator
         method_name = '__r%s__' % op['name']
         setattr(NumpyDispatch, method_name, closure())
+
+
+def unwrap(value):
+    if isinstance(value, NumpyDispatch):
+        # import pdb
+        # pdb.set_trace()
+        return value.arrow_array
+    # for performance reasons we don't visit lists and dicts
+    return value
+
+
+def autowrapper(f):
+    '''Takes a function f, and will unwrap all its arguments and wrap the return value'''
+    def wrapper(*args, **kwargs):
+        args = map(unwrap, args)
+        kwargs = {k: unwrap(v) for k, v, in kwargs.items()}
+        result = f(*args, **kwargs)
+        if isinstance(result, vaex.array_types.supported_arrow_array_types):
+            result = NumpyDispatch(result)
+        return result
+    return wrapper
