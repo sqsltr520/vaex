@@ -6,7 +6,14 @@ from ..expression import _binary_ops, reversable
 class NumpyDispatch:
     def __init__(self, arrow_array):
         self.arrow_array = arrow_array
-        self.numpy_array = vaex.array_types.to_numpy(self.arrow_array)
+        self._numpy_array = None
+
+    @property
+    def numpy_array(self):
+        # convert lazily, since not all arrow arrays (e.g. lists) can be converted
+        if self._numpy_array is None:
+            self._numpy_array = vaex.array_types.to_numpy(self.arrow_array)
+        return self._numpy_array
 
 
 for op in _binary_ops:
