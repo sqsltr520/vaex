@@ -14,7 +14,7 @@ author_email = 'maartenbreddels@gmail.com'
 license = 'MIT'
 version = version.__version__
 url = 'https://www.github.com/maartenbreddels/vaex'
-install_requires_distributed = ['vaex-core', 'vaex-server']
+install_requires_distributed = ['vaex-core', 'vaex-server', 'distributed', 'ray']
 
 setup(name=name + '-distributed',
       version=version,
