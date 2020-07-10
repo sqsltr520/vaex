@@ -12,10 +12,14 @@ def do_chunk(dataset, state, task_specs, i1, i2):
     encoding = Encoding()
     task_parts = encoding.decode_list('task-part-cpu', task_specs, df=df)
     all_expressions = list(set(expression for task in task_parts for expression in task.expressions))
-    all_values = {expression: df.columns[expression][i1:i2] for expression in all_expressions}
+    all_values = {expression: df._evaluate(expression, i1=i1, i2=i2) for expression in all_expressions}
     for task_part in task_parts:
         values = [all_values[k] for k in task_part.expressions]
         task_part.process(0, i1, i2, None, *values)
+        # TODO: we can do this to make it possible to picke, but we need a better solution
+        # task_part.df = None
+        # task_part.grid = None
+        # task_part.aggregations = []
     return task_parts
 
 
@@ -37,7 +41,7 @@ class Executor(vaex.execution.Executor):
     def schedule(self, task):
         self.tasks.append(task)
 
-    def execute(self, delay=False):
+    async def execute_async(self, delay=False):
         cancelled = False
         while not cancelled:
             tasks_df = self.local.tasks = self._pop_tasks()
@@ -62,3 +66,12 @@ class Executor(vaex.execution.Executor):
 
             for task, final_part in zip(tasks_df, ray.get(task_parts)):
                 task.result = final_part.get_result()
+
+
+executor_main = None
+
+def executor():
+    global executor_main
+    if executor_main is None:
+        executor_main = Executor()
+    return executor_main

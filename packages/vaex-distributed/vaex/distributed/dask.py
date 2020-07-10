@@ -13,7 +13,7 @@ def do_chunk(dataset, state, task_specs, i1, i2):
     encoding = Encoding()
     task_parts = encoding.decode_list('task-part-cpu', task_specs, df=df)
     all_expressions = list(set(expression for task_part in task_parts for expression in task_part.expressions))
-    all_values = {expression: df.columns[expression][i1:i2] for expression in all_expressions}
+    all_values = {expression: df._evaluate(expression, i1=i1, i2=i2) for expression in all_expressions}
     for task_part in task_parts:
         values = [all_values[expression] for expression in task_part.expressions]
         task_part.process(0, i1, i2, None, *values)
@@ -37,7 +37,7 @@ class Executor(vaex.execution.Executor):
     def schedule(self, task):
         self.tasks.append(task)
 
-    def execute(self, delay=False):
+    async def execute_async(self, delay=False):
         cancelled = False
         while not cancelled:
             tasks_df = self.local.tasks = self._pop_tasks()
@@ -46,7 +46,7 @@ class Executor(vaex.execution.Executor):
             df = tasks_df[0].df
             state = df.state_get()
             if df.dataset not in self.dask_objects:
-                self.dask_objects[df.dataset] = dask.delayed(df.dataset)
+                self.dask_objects[df.dataset] = dask.persist(df.dataset)[0]
             chunk_count = (len(df) + self.chunk_size - 1) // self.chunk_size
             task_parts_previous = None
             encoding = Encoding()
@@ -63,3 +63,12 @@ class Executor(vaex.execution.Executor):
             for task, task_parts in zip(tasks_df, task_parts.compute()):
                 task.result = task_parts.get_result()
                 task.fulfill(task.result)
+
+
+executor_main = None
+
+def executor():
+    global executor_main
+    if executor_main is None:
+        executor_main = Executor()
+    return executor_main

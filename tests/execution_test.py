@@ -140,25 +140,26 @@ def df():
     return df
 
 
-def test_task_sum(df, executor):
+@pytest.mark.asyncio
+async def test_task_sum(df, executor):
     total = df.x.sum()
     task = vaex.tasks.TaskSum(df, 'x')
     # df.executor = None
     # df._expressions = None
     # executor = vaex.ray.ExecutorRay()
     executor.schedule(task)
-    executor.execute()
+    await executor.execute_async()
     assert task.result == total
 
 
-
-def test_task_sum_hdf5(executor):
+@pytest.mark.asyncio
+async def test_task_sum_hdf5(executor):
     executor.chunk_size = 10*1024
     df = vaex.example()
     total = df.x.sum()
     task = vaex.tasks.TaskSum(df, 'x')
     executor.schedule(task)
-    executor.execute()
+    await executor.execute_async()
     assert abs(task.result - total) < 0.01
 
 

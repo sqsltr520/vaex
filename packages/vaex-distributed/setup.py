@@ -25,5 +25,8 @@ setup(name=name + '-distributed',
       install_requires=install_requires_distributed,
       license=license,
       packages=['vaex.distributed'],
-      zip_safe=False
-      )
+      zip_safe=False,
+      entry_points={
+          'vaex.dataframe.accessor': ['distributed = vaex.distributed:DataFrameAccessorDistributed'],
+      }
+)
