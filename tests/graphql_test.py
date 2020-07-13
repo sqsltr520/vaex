@@ -4,8 +4,13 @@ from common import *
 if vaex.utils.devmode:
     pytest.skip('runs too slow when developing', allow_module_level=True)
 
-def test_aggregates(df_local):
-    df = df_local
+
+@pytest.fixture()
+def df(df_trimmed):
+    return df_trimmed.drop('123456')
+
+def test_aggregates(df):
+    df = df
 
     result = df.graphql.execute("""
     {
@@ -36,8 +41,8 @@ def test_aggregates(df_local):
     assert result.data['df']['mean']['y'] == df.y.mean()
 
 
-def test_groupby(df_local):
-    df = df_local
+def test_groupby(df):
+    df = df
 
     result = df.graphql.execute("""
     {
@@ -57,8 +62,8 @@ def test_groupby(df_local):
     assert result.data['df']['groupby']['x']['min']['x'] == dfg['xmin'].tolist()
 
 
-def test_row_pagination(df_local):
-    df = df_local
+def test_row_pagination(df):
+    df = df
     def values(row, name):
         return [k[name] for k in row]
     schema = df.graphql.schema()
@@ -103,8 +108,8 @@ def test_row_pagination(df_local):
     assert values(result.data['df']['row'], 'x') == df[3:5].x.tolist()
 
 
-def test_where(df_local):
-    df = df_local
+def test_where(df):
+    df = df
     def values(row, name):
         return [k[name] for k in row]
     schema = df.graphql.schema()
@@ -199,9 +204,9 @@ def test_where(df_local):
     assert values(result.data['df']['row'], 'x') == [4, 5, 6]
 
 
-def test_pandas(df_local):
-    df = df_local
-    df_pandas = df_local.to_pandas_df()
+def test_pandas(df):
+    df = df
+    df_pandas = df.to_pandas_df()
     def values(row, name):
         return [k[name] for k in row]
     result = df_pandas.graphql.execute("""

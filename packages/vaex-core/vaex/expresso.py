@@ -127,6 +127,8 @@ def validate_expression(expr, variable_set, function_set=[], names=None):
         validate_expression(expr.value, variable_set, function_set, names)
         if isinstance(expr.slice.value, _ast.Num):
             pass  # numbers are fine
+        elif isinstance(expr.slice.value, _ast.Str):
+            pass  # and strings
         else:
             raise ValueError(
                 "Only subscript/slices with numbers allowed, not: %r" % expr.slice.value)
@@ -412,6 +414,10 @@ class ExpressionString(ast.NodeVisitor):
             left = right
         return s
 
+    def visit_Subscript(self, node):
+        p = self.visit(node.value)
+        v = self.visit(node.slice.value)
+        return f'{p}[{v}]'
 
 class SimplifyExpression(ast.NodeTransformer):
 
@@ -494,6 +500,16 @@ class NameCollector(ast.NodeTransformer):
         self.names[node.id].append(node)
         return node
 
+
+class SliceCollector(ast.NodeTransformer):
+    def __init__(self):
+        self.slices = collections.defaultdict(list)
+
+    def visit_Subscript(self, node):
+        if node.value.id == 'df' and isinstance(node.slice.value, ast.Str):
+            self.slices[node.slice.value.s].append(node)
+        return node
+
 class GraphBuiler(ast.NodeVisitor):
     def __init__(self):
         self.dependencies = []
@@ -566,6 +582,16 @@ def names(expression):
     nc = NameCollector()
     nc.visit(node)
     return nc.names
+
+
+def slices(expression):
+    if isinstance(expression, str):
+        node = parse_expression(expression)
+    else:
+        node = expression
+    nc = SliceCollector()
+    nc.visit(node)
+    return nc.slices
 
 
 def parse_expression(expression_string):
